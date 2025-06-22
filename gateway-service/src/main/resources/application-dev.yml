@@ -1,0 +1,21 @@
+spring:
+  cloud:
+    discovery:
+      client:
+        health-indicator:
+          enabled: true
+    gateway:
+      server:
+        webflux:
+          routes:
+#            - id: AUTH-SERVICE
+#              uri: lb://AUTH-SERVICE
+#              predicates:
+#                - Path=/api/v1/auth/**
+#
+#            - id: USER-SERVICE
+#              uri: lb://USER-SERVICE
+#              predicates:
+#                - Path=/api/v1/roles/**
+#              filters:
+#                - AuthenticationFilter

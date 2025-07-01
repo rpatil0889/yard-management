@@ -1,0 +1,6 @@
+
+/.idea/**
+/eureka-server/target/*
+/auth-service/target/**
+/gateway-service/target/**
+/user-service/target/**

@@ -6,7 +6,7 @@ spring:
           enabled: true
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/hospital
+    url: jdbc:postgresql://localhost:5432/yms
     username: postgres
     password: postgres
   jpa:

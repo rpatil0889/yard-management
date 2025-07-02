@@ -26,8 +26,8 @@ public class UserController {
 
     private final UserService userService;
 
-    @GraphQLMutation(name = "createUser")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GraphQLMutation(name = "createUser",description = "Create a new user")
+    @PreAuthorize("hasRole('USER_CREATE')")
     public ApiResponse<String> createUser(@GraphQLArgument(name = "createUserRequest") CreateUserRequest createUserRequest) {
 
         log.info("Create new user Request {}", createUserRequest);
@@ -40,7 +40,7 @@ public class UserController {
     }
 
     @GraphQLMutation(name = "updateUser", description = "Update a user")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER_UPDATE')")
     public ApiResponse<String> updateUser(@GraphQLArgument(name = "updateUserRequest") UpdateUserRequest updateUserRequest) {
         log.info("Update existing user request {}", updateUserRequest);
         try {
@@ -51,7 +51,7 @@ public class UserController {
     }
 
     @GraphQLMutation(name = "deleteUser", description = "Delete a user by ID")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER_DELETE')")
     public ApiResponse<String> deleteUser(@GraphQLArgument(name = "id") UUID id) {
         log.info("Delete user request {}", id);
         try {
@@ -62,7 +62,7 @@ public class UserController {
     }
 
     @GraphQLQuery(name = "getUser", description = "Get a user by ID")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER_VIEW')")
     public ApiResponse<UserResponse> getUser(@GraphQLArgument(name = "id") UUID id) {
         log.info("Get user by Id request {}", id);
         try {
@@ -73,7 +73,7 @@ public class UserController {
     }
 
     @GraphQLQuery(name = "listUsers", description = "List all users")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('USER_VIEW')")
     public ApiResponse<List<UserResponse>> listUsers() {
         log.info("Get all user list request");
         try {

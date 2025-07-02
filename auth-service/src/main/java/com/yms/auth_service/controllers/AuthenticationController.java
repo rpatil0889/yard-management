@@ -5,19 +5,24 @@ import com.yms.auth_service.dto.request.UserRequest;
 import com.yms.auth_service.dto.response.ApiResponse;
 import com.yms.auth_service.dto.response.AuthResponse;
 import com.yms.auth_service.services.interfaces.AuthenticationService;
+import io.leangen.graphql.annotations.GraphQLArgument;
+import io.leangen.graphql.annotations.GraphQLMutation;
+import io.leangen.graphql.annotations.GraphQLQuery;
+import io.leangen.graphql.spqr.spring.annotations.GraphQLApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * The Class AuthenticationController.
  */
-@RestController
+@GraphQLApi
 @RequiredArgsConstructor
-@RequestMapping(value = "/api/v1/auth")
+@Service
+@Slf4j
 public class AuthenticationController {
 
     /** The authentication service. */
@@ -28,45 +33,40 @@ public class AuthenticationController {
      * Registers a new user with the specified details.
      *
      * @param request the details of the user to be registered
-     * @param bindingResult the result of the validation of the request
      * @return a ResponseEntity containing an ApiResponse with a message indicating the success or failure
      *         of the registration operation
      */
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<String>> registerUser(@Valid @RequestBody UserRequest request, BindingResult bindingResult) {
+    @GraphQLMutation(name = "registerUser", description = "Register a new user")
+    public ApiResponse<String> registerUser(@GraphQLArgument(name = "request") UserRequest request) {
         try {
-            ApiResponse<String> apiResponse = authenticationService.registerUser(request, bindingResult);
-            return ResponseEntity.status(apiResponse.getStatus()).body(apiResponse);
+            return authenticationService.registerUser(request);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null));
+            return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null);
         }
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>>login(@Valid @RequestBody AuthRequest request, BindingResult result){
+    @GraphQLQuery(name = "login", description = "Login a user")
+    public ApiResponse<AuthResponse>login(@Valid @RequestBody AuthRequest request){
         try {
-            ApiResponse<AuthResponse> login = authenticationService.login(request);
-            return ResponseEntity.status(login.getStatus()).body(login);
+            return authenticationService.login(request);
 
         }catch (Exception e){
-            return ResponseEntity.internalServerError().body(new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null));
+            return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null);
         }
     }
 
-    @GetMapping("/validate")
-    public ResponseEntity<String> validateToken(@RequestHeader("Authorization") String authHeader) {
+    @GraphQLQuery(name = "validateToken", description = "Validate a JWT token")
+    public ApiResponse<String> validateToken(@GraphQLArgument(name = "token") String token) {
         try {
-            String token=authHeader;
             // Remove "Bearer "
-            if (authHeader == null || authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
+            if (token == null || token.startsWith("Bearer ")) {
+                token = token.substring(7);
             }
-
             authenticationService.validateToken(token); // Throws exception if invalid
 
-            return ResponseEntity.ok("Token is valid");
+            return new ApiResponse<>(HttpStatus.OK.value(), "Token is valid", null);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or expired token");
+            return new ApiResponse<>(HttpStatus.UNAUTHORIZED.value(), "Invalid Token", null);
         }
     }
 

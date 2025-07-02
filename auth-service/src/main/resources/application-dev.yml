@@ -12,4 +12,9 @@ spring:
       ddl-auto: update
 
 
+graphql:
+  spqr:
+    base-packages: com.yms.auth_service
+    http:
+      endpoint: /api/v1/auth
 

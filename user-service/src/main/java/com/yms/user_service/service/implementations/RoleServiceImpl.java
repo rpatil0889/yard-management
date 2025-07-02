@@ -1,6 +1,7 @@
 package com.yms.user_service.service.implementations;
 
 import com.yms.user_service.dto.request.CreateRoleRequest;
+import com.yms.user_service.dto.request.RolePermissionDTO;
 import com.yms.user_service.dto.request.UpdateRolePermissionRequest;
 import com.yms.user_service.dto.response.ApiResponse;
 import com.yms.user_service.dto.response.RoleResponse;
@@ -8,6 +9,7 @@ import com.yms.user_service.entities.Permission;
 import com.yms.user_service.entities.Role;
 import com.yms.user_service.entities.RoleModule;
 import com.yms.user_service.entities.RoleModulePermission;
+import com.yms.user_service.enums.ModuleStatus;
 import com.yms.user_service.enums.PermissionType;
 import com.yms.user_service.enums.RoleStatus;
 import com.yms.user_service.repositories.PermissionRepository;
@@ -19,6 +21,7 @@ import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -96,42 +99,94 @@ public class RoleServiceImpl implements RoleService {
     public ApiResponse<String> updateRolePermissions(UpdateRolePermissionRequest request) {
 
         Optional<Role> optionalRole = roleRepository.findById(request.getRoleId());
-        if (optionalRole.isEmpty()){
+        if (optionalRole.isEmpty()) {
             return new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Role not found", null);
         }
         Role role = optionalRole.get();
-        Map<PermissionType, Permission> permissionsMap = permissionRepository.findAll()
-                .stream()
+
+        // Clear old permissions
+        List<RoleModulePermission> existingPermissions = roleModulePermissionRepository.findByRole(role);
+        if (existingPermissions != null && !existingPermissions.isEmpty()) {
+            roleModulePermissionRepository.deleteAll(existingPermissions);
+        }
+
+        if(CollectionUtils.isEmpty(request.getModulePermissions())) {
+            return new ApiResponse<>(HttpStatus.OK.value(), "Role permission updated successfully", null);
+        }
+
+        // Load and validate permissions
+        List<Permission> allPermissions = permissionRepository.findAll();
+        if (allPermissions == null || allPermissions.isEmpty()) {
+            return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), "No permissions found in system", null);
+        }
+
+        Map<PermissionType, Permission> permissionsMap = allPermissions.stream()
+                .filter(Objects::nonNull)
                 .collect(Collectors.toMap(Permission::getName, p -> p));
 
-        List<String> moduleNames = new ArrayList<>(request.getModulePermissions().keySet());
+        // Extract module names safely
+        List<String> moduleNames = request.getModulePermissions().stream()
+                .filter(Objects::nonNull)
+                .map(RolePermissionDTO::getModuleName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        List<RoleModule> modules= roleModuleRepository.findByNameInAndStatus(moduleNames, RoleStatus.ACTIVE);
+        if (moduleNames.isEmpty()) {
+            return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "No valid module names found", null);
+        }
 
-        List<RoleModulePermission> permissions = roleModulePermissionRepository.findByRole(role);
+        // Fetch valid modules
+        List<RoleModule> modules = roleModuleRepository.findByNameInAndStatus(moduleNames, ModuleStatus.ACTIVE);
+        if (modules == null || modules.isEmpty()) {
+            return new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "No valid active modules found", null);
+        }
 
-        permissions.clear();
 
-        for (String moduleName : request.getModulePermissions().keySet()) {
+
+        List<RoleModulePermission> newPermissions = new ArrayList<>();
+
+        for (RolePermissionDTO dto : request.getModulePermissions()) {
+            if (dto == null || dto.getModuleName() == null || dto.getPermissions() == null) continue;
+
+            String moduleName = dto.getModuleName();
             RoleModule module = modules.stream()
-                    .filter(m -> m.getName().equals(moduleName))
+                    .filter(m -> m.getName().equalsIgnoreCase(moduleName))
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Module not found: " + moduleName));
+                    .orElse(null);
 
-            for (PermissionType permissionName : request.getModulePermissions().get(moduleName)) {
-                Permission permission = permissionsMap.get(permissionName);
-                if (permission == null) {
-                    return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Permission not found: " + permissionName, null);
+            if (module == null) {
+                return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Module not found or inactive: " + moduleName, null);
+            }
+
+            for (String permString : dto.getPermissions()) {
+                if (permString == null || permString.isBlank()) continue;
+
+                PermissionType permissionType;
+                try {
+                    permissionType = PermissionType.valueOf(permString.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Invalid permission: " + permString, null);
                 }
+
+                Permission permission = permissionsMap.get(permissionType);
+                if (permission == null) {
+                    return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "Permission not found in system: " + permissionType, null);
+                }
+
                 RoleModulePermission roleModulePermission = new RoleModulePermission();
                 roleModulePermission.setRole(role);
                 roleModulePermission.setModule(module);
                 roleModulePermission.setPermission(permission);
-                permissions.add(roleModulePermission);
+                newPermissions.add(roleModulePermission);
             }
         }
-        roleModulePermissionRepository.saveAll(permissions);
-        return new ApiResponse<>(HttpStatus.OK.value(), "Role permissions updated successfully", null);
 
+        if (!newPermissions.isEmpty()) {
+            roleModulePermissionRepository.saveAll(newPermissions);
+        }
+
+        return new ApiResponse<>(HttpStatus.OK.value(), "Role permissions updated successfully", null);
     }
+
+
 }

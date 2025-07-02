@@ -19,7 +19,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BindingResult;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,25 +54,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @return a string with a success message.
      */
     @Override
-    public ApiResponse<String> registerUser(UserRequest request, BindingResult bindingResult) {
-
-        if (bindingResult.hasErrors()) {
-            StringBuilder errors = new StringBuilder();
-            bindingResult.getFieldErrors().forEach(error ->
-                    errors.append(error.getField())
-                            .append(": ")
-                            .append(error.getDefaultMessage())
-                            .append("; ")
-            );
-            return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), errors.toString(), null);
-        }
+    public ApiResponse<String> registerUser(UserRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             return new ApiResponse<>(HttpStatus.BAD_REQUEST.value(), "User already exists", null);
         }
         User user = modelMapper.map(request, User.class);
         List<Role> roles = roleRepository.findByNameIn(List.of("USER"));
-        user.setRole(roles);
+        user.setRoles(roles);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
         user.setCreatedOn(LocalDateTime.now());
@@ -98,7 +86,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .email(user.getEmail())
                         .name(user.getName())
                         .token(token)
-                        .role(user.getRole().stream().map(Role::getName).toList()).build();
+                        .role(user.getRoles().stream().map(Role::getName).toList()).build();
                 return new ApiResponse<>(HttpStatus.OK.value(), "Login Successful", authResponse);
             }
             else {
@@ -114,4 +102,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         jwtService.validateToken(token);
         return new ApiResponse<>(HttpStatus.OK.value(),"Token is valid",null);
     }
+
+
+
 }

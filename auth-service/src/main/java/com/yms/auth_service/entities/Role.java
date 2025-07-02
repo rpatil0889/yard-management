@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -33,5 +35,8 @@ public class Role extends CommonFields{
 
     @Convert(converter = RoleStatusConverter.class)
     private RoleStatus status;
+
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RoleModulePermission> modulePermissions = new ArrayList<>();
 
 }

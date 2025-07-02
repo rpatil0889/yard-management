@@ -6,17 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UpdateRolePermissionRequest {
+public class RolePermissionDTO {
 
-    private UUID roleId;
+    private String moduleName;
 
-    private List<RolePermissionDTO> modulePermissions;
-
-
+    private List<String> permissions;
 }

@@ -5,7 +5,6 @@ import com.yms.auth_service.dto.request.AuthRequest;
 import com.yms.auth_service.dto.request.UserRequest;
 import com.yms.auth_service.dto.response.ApiResponse;
 import com.yms.auth_service.dto.response.AuthResponse;
-import org.springframework.validation.BindingResult;
 
 /**
  * The AuthenticationService interface provides methods for user authentication and authorization.
@@ -20,7 +19,7 @@ public interface AuthenticationService {
      * @return An ApiResponse containing a message indicating the success or failure
      *         of the registration operation.
      */
-    ApiResponse<String> registerUser(UserRequest request, BindingResult bindingResult);
+    ApiResponse<String> registerUser(UserRequest request);
 
 
     ApiResponse<AuthResponse>login(AuthRequest authRequest);

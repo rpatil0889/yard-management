@@ -17,13 +17,13 @@ public class UserDetailsImpl implements UserDetails {
     public UserDetailsImpl(User user) {
         this.email = user.getEmail();
         this.password = user.getPassword();
-        this.roles = user.getRole().stream().map(role -> role.getName()).toList();
+        this.roles = user.getRoles().stream().map(role -> role.getName()).toList();
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-                .map(roleName -> new SimpleGrantedAuthority("ROLE_" + roleName))
+                .map(roleName -> new SimpleGrantedAuthority(roleName))
                 .toList();
     }
 

@@ -27,7 +27,7 @@ public class RoleController {
     private final RoleService roleService;
 
     @GraphQLMutation(name = "createRole", description = "Create a new role")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_CREATE')")
     public ApiResponse<String> createRole(@GraphQLArgument(name = "roleRequest") CreateRoleRequest createRoleRequest) {
         try {
             return roleService.createRole(createRoleRequest);
@@ -37,7 +37,7 @@ public class RoleController {
     }
 
     @GraphQLMutation(name = "updateRole", description = "Update an existing role")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_UPDATE')")
     public ApiResponse<String> updateRole(@GraphQLArgument(name = "roleRequest") CreateRoleRequest createRoleRequest) {
         try {
             return roleService.updateRole(createRoleRequest);
@@ -47,7 +47,7 @@ public class RoleController {
     }
 
     @GraphQLMutation(name = "deleteRole", description = "Delete a role by ID")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_DELETE')")
     public ApiResponse<String> deleteRole(@GraphQLArgument(name = "id") UUID id) {
         try {
             return roleService.deleteRole(id);
@@ -57,7 +57,7 @@ public class RoleController {
     }
 
     @GraphQLQuery(name = "getRole", description = "Get a role by ID")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_VIEW')")
     public ApiResponse<RoleResponse> getRole(@GraphQLArgument(name = "id") UUID id) {
         try {
             return roleService.getRole(id);
@@ -67,7 +67,7 @@ public class RoleController {
     }
 
     @GraphQLQuery(name = "listRoles", description = "List all roles")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_VIEW')")
     public ApiResponse<List<RoleResponse>> listRoles() {
         try {
             return roleService.getAllRoles();
@@ -77,7 +77,7 @@ public class RoleController {
     }
 
     @GraphQLMutation(name="updatePermissions", description = "Update permissions for a role")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_UPDATE')")
     public ApiResponse<String> updateRolePermissions(@GraphQLArgument(name = "request") UpdateRolePermissionRequest request) {
         try {
             return roleService.updateRolePermissions(request);

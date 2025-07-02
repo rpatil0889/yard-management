@@ -11,6 +11,7 @@ import io.leangen.graphql.annotations.GraphQLQuery;
 import io.leangen.graphql.spqr.spring.annotations.GraphQLApi;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ModuleController {
     private final ModuleService moduleService;
 
     @GraphQLMutation(name = "createModule", description = "Create a new module")
+    @PreAuthorize("hasAuthority('MODULE_CREATE')")
     public ApiResponse<String> createModule(@GraphQLArgument(name = "createModuleRequest") CreateModuleRequest createModuleRequest) {
        try {
            return moduleService.createModule(createModuleRequest);
@@ -33,6 +35,7 @@ public class ModuleController {
     }
 
     @GraphQLMutation(name = "updateModule", description = "Update an existing module")
+    @PreAuthorize("hasAuthority('MODULE_UPDATE')")
     public ApiResponse<String> updateModule(@GraphQLArgument(name = "updateModuleRequest") UpdateModuleRequest updateModuleRequest) {
         try {
             return moduleService.updateModule(updateModuleRequest);
@@ -42,6 +45,7 @@ public class ModuleController {
     }
 
     @GraphQLMutation(name = "deleteModule", description = "Delete a module by ID")
+    @PreAuthorize("hasAuthority('MODULE_DELETE')")
     public ApiResponse<String> deleteModule(@GraphQLArgument(name = "id") UUID id) {
         try {
             return moduleService.deleteModule(id);
@@ -51,6 +55,7 @@ public class ModuleController {
     }
 
     @GraphQLQuery(name = "getModule", description = "Get a module by ID")
+    @PreAuthorize("hasAuthority('MODULE_VIEW')")
     public ApiResponse<ModuleResponse> getModule(@GraphQLArgument(name = "id") UUID id) {
         try {
             return moduleService.getModule(id);
@@ -58,7 +63,9 @@ public class ModuleController {
             return new ApiResponse<>(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null);
         }
     }
+
     @GraphQLQuery(name = "getAllModules", description = "Get all modules")
+    @PreAuthorize("hasAuthority('MODULE_VIEW')")
     public ApiResponse<List<ModuleResponse>> getAllModules() {
         try {
             return moduleService.getAllModules();
